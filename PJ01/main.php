@@ -192,7 +192,7 @@ function unixGetProcessNums($psname)
 // die;
 
 $phpbin = '/usr/local/php/bin/php';
-$runpath = '';
+$runpath = '/var/www/phpstu/';
 $logpath = __DIR__.'/logs/'; // 后面的/不能少
 
 if (!is_dir($logpath)) {
@@ -200,8 +200,11 @@ if (!is_dir($logpath)) {
 }
 
 $preCronJobs = [
-    '*/1 * * * * | 01-test' => $phpbin . ' ' . $runpath . ' 01-test.php Admin/index',
+    '*/1 * * * * | 01-test' => $phpbin . ' ' . $runpath . '01-test.php param1 param2',
 ];
+// print_r($preCronJobs);
+// die();
+
 //+++++++++++++++++++++++++++++++++++++++
 //+++++++++++++++++++++++++++++++++++++++
 //+++++++++++++++++++++++++++++++++++++++
@@ -210,8 +213,8 @@ $loger = new Loger($logpath);
 $cronJobs = [];
 foreach ($preCronJobs as $key => $cmd) {
     $keyArr   = explode('|', $key, 2);
-    $name     = trim($keyArr[0]);
-    $period   = trim($keyArr[1]);
+    $name     = trim($keyArr[1]);
+    $period   = trim($keyArr[0]);
     $hashname = '_' . md5(strtolower($name)) . '_';
 
     // 判断进程避免重复执行
@@ -222,6 +225,8 @@ foreach ($preCronJobs as $key => $cmd) {
     $cronJobs[$cmd.' '.$hashname.' > '.$logpath.'phpcron_'.$name.'.log 2>&1'] = $period;
 }
 
+// print_r($cronJobs);
+// die();
 
 $phpCrontab = new PHPCronController();
 // $result = $phpCrontab->parseCron($cronJobs);
