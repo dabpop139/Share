@@ -222,7 +222,7 @@ foreach ($preCronJobs as $key => $cmd) {
         $loger->log('warning', 'Job cancel, previous job still run');
         continue;
     }
-    $cronJobs[$cmd.' '.$hashname.' > '.$logpath.'phpcron_'.$name.'.log 2>&1'] = $period;
+    $cronJobs[$cmd.' > '.$logpath.'phpcron_'.$name.$hashname.'.log 2>&1'] = $period;
 }
 
 // print_r($cronJobs);
