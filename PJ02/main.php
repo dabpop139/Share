@@ -1,11 +1,21 @@
 <?php
 require_once 'tpdb/TpLoader.php';
-require_once 'common/function.php';
 
 use Swoole\Process;
 use Swoole\Runtime;
 use Swoole\Coroutine\Http\Server;
 use Swoole\Coroutine\WaitGroup;
+
+$lockfname = 'lockex-tpswoole-main';
+$lockpath = '/tmp/'.$lockfname;
+
+$fplock = fopen($lockpath, 'w');
+// LOCK_NB 设置非阻塞等待
+if (!flock($fplock, LOCK_EX|LOCK_NB)) {
+    // echo 'Error: fetch LOCK_EX error -> '.$lockpath.PHP_EOL;
+    exit();
+}
+// echo 'Success: fetch LOCK_EX success -> '.$lockpath.PHP_EOL;
 
 Swoole\Process::daemon();
 Runtime::enableCoroutine();
@@ -45,6 +55,10 @@ $pool = new Process\Pool(6);
 // 让每个OnWorkerStart回调都自动创建一个协程
 $pool->set(['enable_coroutine' => true]);
 $pool->on('workerStart', function ($pool, $id) {
+
+    // 热加载需要在这里引入
+    require_once 'common/function.php';
+
     // 这里reuse port重复利用端口一定要设置为true，否则会报绑定端口错误
     $server = new Server('0.0.0.0', '9502', false, true);
 
