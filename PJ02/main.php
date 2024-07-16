@@ -117,6 +117,11 @@ $pool->on('workerStart', function ($pool, $id) {
             $dbConfig['DB_LINKID'] = $dbLinkId; // 这个配置实际没什么作用只是让TpDb::getInstance返回不同的实例
 
             $tpMM = new TpMM($dbConfig);
+            // 类似golang的defer
+            defer(function () use ($tpMM) {
+                $tpMM->freeM();
+                unset($tpMM);
+            });
 
             $tpMM->M('users', '')->where(['id' => 1])->find();
             $tpMM->freeM(); // TpMM中设置了析构函数自动处理,这里不确定是否需要显式调用
