@@ -111,15 +111,15 @@ $pool->on('workerStart', function ($pool, $id) {
             $microtime = microtime(true);
             $microtime = $microtime*10000;
             $dbLinkId  = intval(substr($microtime,8));
+            
             // 每个协程配置一个PDO连接
-            $tblArr = [
-                'users',
-            ];
             $dbConfig = $dsnConfig;
             $dbConfig['DB_LINKID'] = $dbLinkId; // 这个配置实际没什么作用只是让TpDb::getInstance返回不同的实例
 
-            M('users', '', $dbConfig)->where(['id' => 1])->find();
-            freeM($tblArr, '', $dbConfig);
+            $tpMM = new TpMM($dbConfig);
+
+            $tpMM->M('users', '')->where(['id' => 1])->find();
+            $tpMM->freeM(); // TpMM中设置了析构函数自动处理,这里不确定是否需要显式调用
 
             ajaxReturn($response, ['time' => date('Y-m-d H:i:s')]);
             // $response->end(date('Y-m-d H:i:s'));

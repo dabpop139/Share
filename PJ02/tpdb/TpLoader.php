@@ -1,5 +1,6 @@
 <?php
 require_once 'TpModel.class.php';
+require_once 'TpMM.class.php';
 require_once 'TpDb.class.php';
 require_once 'TpDriver.class.php';
 require_once 'TpMysql.class.php';
