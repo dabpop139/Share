@@ -111,7 +111,7 @@ $pool->on('workerStart', function ($pool, $id) {
             $microtime = microtime(true);
             $microtime = $microtime*10000;
             $dbLinkId  = intval(substr($microtime,8));
-            
+
             // 每个协程配置一个PDO连接
             $dbConfig = $dsnConfig;
             $dbConfig['DB_LINKID'] = $dbLinkId; // 这个配置实际没什么作用只是让TpDb::getInstance返回不同的实例
