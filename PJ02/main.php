@@ -110,7 +110,7 @@ $pool->on('workerStart', function ($pool, $id) {
 
             $microtime = microtime(true);
             $microtime = $microtime*10000;
-            $dbLinkId  = intval(substr($microtime,8));
+            $dbLinkId  = (substr($microtime,8)).''.rand(1000, 9999);
 
             // 每个协程配置一个PDO连接
             $dbConfig = $dsnConfig;
