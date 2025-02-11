@@ -1,5 +1,9 @@
 <?php
 abstract class TpDriver {
+
+    static private $PDOPoolMaxNum = 50; // PDO连接池最大容量
+    static private $PDOPool = []; // 数据库PDO连接池
+
     // PDO操作实例
     protected $PDOStatement = null;
     // 当前操作所属的模型名
@@ -84,7 +88,11 @@ abstract class TpDriver {
                     // 禁用模拟预处理语句
                     $this->options[\PDO::ATTR_EMULATE_PREPARES]  =   false;
                 }
-                $this->linkID[$linkNum] = new \PDO( $config['dsn'], $config['username'], $config['password'],$this->options);
+                $pdoIns = self::PDOborrow();
+                if (is_null($pdoIns)) {
+                    $pdoIns = new \PDO( $config['dsn'], $config['username'], $config['password'],$this->options);
+                }
+                $this->linkID[$linkNum] = $pdoIns;
             }catch (\PDOException $e) {
                 if($autoConnection){
                     trace($e->getMessage(),'','ERR');
@@ -133,7 +141,7 @@ abstract class TpDriver {
             return $this->queryStr;
         }
         if (APP_DEBUG && !preg_match('/FROM `auth_rule`|FROM auth_group_access/i', $this->queryStr)) {
-            file_put_contents('debug_sql.txt', date('Y-m-d H:i:s') . '   LOG_WARNING!!!   ' . $this->queryStr . PHP_EOL, FILE_APPEND);
+            @file_put_contents('debug_sql.txt', date('Y-m-d H:i:s') . '   LOG_WARNING!!!   ' . $this->queryStr . PHP_EOL, FILE_APPEND);
         }
         //释放前次的查询结果
         if ( !empty($this->PDOStatement) ) $this->free();
@@ -161,8 +169,7 @@ abstract class TpDriver {
         //改start cwhao
         try{
             $result =   $this->PDOStatement->execute();
-        }
-        catch(\Exception $e){
+        } catch(\Exception $e) {
             $result = false;
             trace(' '.$e->getMessage(), '数据库执行错误');
         }
@@ -200,7 +207,7 @@ abstract class TpDriver {
             return $this->queryStr;
         }
         if (APP_DEBUG && !preg_match('/FROM `auth_rule`|FROM auth_group_access/i', $this->queryStr)) {
-            file_put_contents('debug_sql.txt', date('Y-m-d H:i:s') . '   LOG_WARNING!!!   ' . $this->queryStr . PHP_EOL, FILE_APPEND);
+            @file_put_contents('debug_sql.txt', date('Y-m-d H:i:s') . '   LOG_WARNING!!!   ' . $this->queryStr . PHP_EOL, FILE_APPEND);
         }
         //释放前次的查询结果
         if ( !empty($this->PDOStatement) ) $this->free();
@@ -334,6 +341,9 @@ abstract class TpDriver {
      * @access public
      */
     public function close() {
+        if ($this->_linkID) {
+            self::PDOrecycle($this->_linkID);
+        }
         $this->_linkID = null;
     }
 
@@ -1154,5 +1164,49 @@ abstract class TpDriver {
         }
         // 关闭连接
         $this->close();
+    }
+
+    /**
+     * 借出
+     * @return \PDO|null
+     */
+    static function PDOborrow()
+    {
+        $lock = new \Swoole\Lock(SWOOLE_MUTEX);
+        $lock->lock(); // 这里的锁是给多进程协程版本加的
+        if (count(self::$PDOPool) == 0) {
+            $lock->unlock();
+            return null;
+        } else {
+            $pdoIns = array_shift(self::$PDOPool);
+            $lock->unlock();
+            // 检查连接是否可用
+            try {
+                $stmt = $pdoIns->query('SELECT 1');
+                $stmt->fetchColumn();
+                $stmt = null;
+                return $pdoIns;
+            } catch (\PDOException $e) {
+                return null;
+            }
+        }
+    }
+
+    /**
+     * 归还回连接池
+     * @param \PDO $pdoIns
+     * @return bool
+     */
+    static function PDOrecycle(\PDO $pdoIns)
+    {
+        $lock = new \Swoole\Lock(SWOOLE_MUTEX);
+        $lock->lock(); // 这里的锁是给多进程协程版本加的
+        if (count(self::$PDOPool) > self::$PDOPoolMaxNum) {
+            $lock->unlock();
+            return false;
+        }
+        self::$PDOPool[] = $pdoIns;
+        $lock->unlock();
+        return true;
     }
 }
