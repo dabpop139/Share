@@ -1,0 +1,29 @@
+{
+  "name": "SQLift",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@codemirror/lang-sql": "^6.9.1",
+    "ag-grid-community": "^29.3.5",
+    "ag-grid-vue3": "^29.3.5",
+    "axios": "^1.4.0",
+    "codemirror": "^6.0.2",
+    "element-plus": "^2.3.6",
+    "qs": "^6.11.2",
+    "vue": "^3.2.47",
+    "vue-codemirror": "^6.1.1",
+    "vue-i18n": "^9.3.0-beta.24",
+    "vue-router": "^4.2.2",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^4.1.0",
+    "vite": "^4.3.9"
+  }
+}
